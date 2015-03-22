@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from mock import patch
 import sys
 
 from django.apps import apps
@@ -264,6 +265,31 @@ class IsolateModelsMixin(object):
         for model in (set(self.current_models) - self.saved_models):
             del self.current_models[model]
         apps.clear_cache()
+
+
+class CheckConnectionTests(TestCase):
+    def setUp(self):
+        self.out = StringIO()
+        self.err = StringIO()
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
+    @patch('django.core.mail.backends.smtp.EmailBackend.check')
+    def test_smtp_connection_does_not_error_if_available(self, mock_smtp_check):
+        mock_smtp_check.return_value = None
+        call_command('check', stdout=self.out, stderr=self.err)
+        self.assertEqual('', self.err.getvalue())
+        self.assertIn('no issues', self.out.getvalue())
+
+    @override_settings(
+        SILENCED_SYSTEM_CHECKS=['smtp.E001'],
+        EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+    )
+    @patch('django.core.mail.backends.smtp.EmailBackend.check')
+    def test_smtp_connection_errors_if_unavailable(self, mock_smtp_check):
+        mock_smtp_check.return_value = Error('mock error', id='smtp.E001')
+        call_command('check', stdout=self.out, stderr=self.err)
+        self.assertEqual('', self.out.getvalue())
+        self.assertIn('smtp.E001', self.err.getvalue())
 
 
 class CheckFrameworkReservedNamesTests(IsolateModelsMixin, TestCase):

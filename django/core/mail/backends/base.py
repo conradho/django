@@ -52,3 +52,6 @@ class BaseEmailBackend(object):
         messages sent.
         """
         raise NotImplementedError('subclasses of BaseEmailBackend must override send_messages() method')
+
+    def check(self):
+        pass

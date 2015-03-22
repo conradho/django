@@ -15,6 +15,7 @@ class Tags(object):
     models = 'models'
     security = 'security'
     signals = 'signals'
+    connections = 'connections'
 
 
 class CheckRegistry(object):

@@ -4,6 +4,7 @@ import ssl
 import threading
 
 from django.conf import settings
+from django.core.checks import Error
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address
 from django.core.mail.utils import DNS_NAME
@@ -126,3 +127,11 @@ class EmailBackend(BaseEmailBackend):
                 raise
             return False
         return True
+
+    def check(self):
+        try:
+            self.open()
+        except:
+            pass
+        if not self.connection:
+            return Error('SMTP connection error', id='connections.E002')
